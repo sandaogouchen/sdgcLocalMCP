@@ -1,0 +1,47 @@
+{
+  "maxTimeout": 300000,
+  "defaultTimeout": 60000,
+  "workingDirectory": "/Users/bytedance/Documents/sdgcLocalMCP",
+  "enableAudit": true,
+  "auditLogPath": "/Users/bytedance/Documents/sdgcLocalMCP/logs/audit.log",
+  "blockedCommands": ["rm -rf /", "rm -rf /*", "mkfs"],
+  "allowedPaths": ["/Users/bytedance/Documents/sdgcLocalMCP", "/tmp"],
+  "requireConfirmationPatterns": ["rm -rf", "sudo", "chmod 777"],
+  "bridge": {
+    "enabled": true,
+    "host": "0.0.0.0",
+    "port": 3002,
+    "path": "/mcp",
+    "wsPath": "/bridge/agent",
+    "bearerTokens": ["replace-with-strong-public-bearer-token"],
+    "requestTimeoutMs": 30000,
+    "agents": [
+      {
+        "agentId": "local-agent-1",
+        "secret": "replace-with-agent-shared-secret"
+      }
+    ],
+    "replayProtection": {
+      "maxSkewMs": 300000,
+      "nonceTtlMs": 300000
+    }
+  },
+  "localAgent": {
+    "enabled": true,
+    "serverUrl": "ws://127.0.0.1:3002/bridge/agent",
+    "agentId": "local-agent-1",
+    "secret": "replace-with-agent-shared-secret",
+    "reconnectIntervalMs": 5000,
+    "requestTimeoutMs": 30000,
+    "policy": {
+      "allowedTools": ["execute_bash", "check_command_safety"],
+      "workingDirectory": "/Users/bytedance/Documents/sdgcLocalMCP",
+      "allowEnvironment": false,
+      "allowedEnvironmentKeys": []
+    },
+    "replayProtection": {
+      "maxSkewMs": 300000,
+      "nonceTtlMs": 300000
+    }
+  }
+}

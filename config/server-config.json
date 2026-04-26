@@ -1,0 +1,33 @@
+{
+  "maxTimeout": 300000,
+  "defaultTimeout": 60000,
+  "workingDirectory": "/Users/bytedance/Documents/sdgcLocalMCP",
+  "enableAudit": true,
+  "auditLogPath": "/Users/bytedance/Documents/sdgcLocalMCP/logs/audit.log",
+  "blockedCommands": [
+    "rm -rf /",
+    "rm -rf /*",
+    "mkfs",
+    ":>/dev/sda",
+    "mv / /dev/null",
+    "sudo rm",
+    "format",
+    "del /f /s /q"
+  ],
+  "allowedPaths": [
+    "/Users/bytedance/Documents/sdgcLocalMCP",
+    "/tmp",
+    "/var/tmp"
+  ],
+  "requireConfirmationPatterns": [
+    "rm -rf",
+    "sudo",
+    "chmod 777",
+    "mkfs",
+    "dd",
+    "> /dev/",
+    ">/dev/",
+    "curl.*sh",
+    "wget.*sh"
+  ]
+}
