@@ -3,6 +3,7 @@ import http from 'node:http';
 import { z } from 'zod';
 
 import { loadConfig } from './config/default.js';
+import { Semaphore } from './server/semaphore.js';
 import { ToolService, redactErrorMessage } from './server/tool-service.js';
 
 const JsonRpcRequestSchema = z.object({
@@ -38,6 +39,11 @@ function sendJson(res: http.ServerResponse, statusCode: number, payload: unknown
     'Content-Length': Buffer.byteLength(body),
   });
   res.end(body);
+}
+
+function sendAccepted(res: http.ServerResponse): void {
+  res.writeHead(202);
+  res.end();
 }
 
 async function readBody(req: http.IncomingMessage): Promise<string> {
@@ -77,6 +83,9 @@ async function main(): Promise<void> {
   const config = await loadConfig(configPath);
   const toolService = new ToolService(config);
 
+  const httpCapacity = config.concurrency?.http ?? 16;
+  const httpSem = new Semaphore(httpCapacity);
+
   const host = resolveHost();
   const advertisedHost = resolveAdvertisedHost(host);
   const port = Number(process.env.PORT || 3001);
@@ -90,6 +99,16 @@ async function main(): Promise<void> {
           host,
           port,
           endpoint: `http://${advertisedHost}:${port}/mcp`,
+          concurrency: {
+            http: {
+              capacity: httpSem.maxConcurrency,
+              inFlight: httpSem.inFlight,
+              queueDepth: httpSem.queueDepth,
+            },
+          },
+          audit: {
+            pending: toolService.getAuditPending(),
+          },
         });
       }
 
@@ -131,6 +150,9 @@ async function main(): Promise<void> {
           });
 
         case 'notifications/initialized':
+          if (payload.id === undefined) {
+            return sendAccepted(res);
+          }
           return sendJson(res, 200, {
             jsonrpc: '2.0',
             id,
@@ -152,6 +174,20 @@ async function main(): Promise<void> {
 
           if (!name || typeof name !== 'string') {
             return sendJson(res, 200, makeError(id, -32602, 'Invalid params: tool name is required'));
+          }
+
+          // Fail-fast concurrency gate: reject immediately when saturated so
+          // clients can retry rather than pile up server-side.
+          if (!httpSem.tryAcquire()) {
+            return sendJson(
+              res,
+              503,
+              makeError(
+                id,
+                -32000,
+                `Too many concurrent tool calls on HTTP endpoint (limit ${httpSem.maxConcurrency})`
+              )
+            );
           }
 
           try {
@@ -178,6 +214,8 @@ async function main(): Promise<void> {
             }
 
             return sendJson(res, 200, makeError(id, -32603, redactErrorMessage(error)));
+          } finally {
+            httpSem.release();
           }
         }
 
@@ -192,6 +230,7 @@ async function main(): Promise<void> {
   server.listen(port, host, () => {
     console.log(`SDGC Local MCP HTTP server listening on ${host}:${port}`);
     console.log(`MCP endpoint: http://${advertisedHost}:${port}/mcp`);
+    console.log(`HTTP concurrency limit: ${httpSem.maxConcurrency}`);
   });
 
   const closeServer = () => {

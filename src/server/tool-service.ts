@@ -110,6 +110,11 @@ export class ToolService {
     return this.config;
   }
 
+  /** Expose audit buffer size for /health observability. */
+  getAuditPending(): number {
+    return this.auditLogger.pendingCount;
+  }
+
   async stop(): Promise<void> {
     await this.auditLogger.stop();
   }

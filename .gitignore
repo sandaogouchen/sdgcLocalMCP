@@ -1,2 +1,20 @@
 .src.bak.*/
 node_modules/
+dist/
+logs/
+config/bridge.local.json
+
+# session artifacts
+.DS_Store
+.agent_prompt_*.md
+manual.*
+manual_result.json
+repair_mcp_local.py
+tmp-bridge-test/
+sdgc-mcp-bridge.zip
+sdgc-mcp-bridge/
+sdgc-mcp-remote-bridge.zip
+sdgc-mcp-remote-bridge/
+
+# local-only config (contains secrets)
+config/server-config.json

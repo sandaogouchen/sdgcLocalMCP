@@ -57,6 +57,8 @@ export interface BridgeServerConfig {
   requestTimeoutMs: number;
   agents: BridgeAgentCredentials[];
   replayProtection: BridgeReplayProtectionConfig;
+  /** Max concurrent in-flight tool calls on this bridge endpoint. Default: 16. */
+  concurrency?: number;
 }
 
 export interface LocalAgentConfig {
@@ -70,6 +72,17 @@ export interface LocalAgentConfig {
   replayProtection: BridgeReplayProtectionConfig;
 }
 
+/**
+ * Per-transport concurrency limits. Each transport maintains its own
+ * independent semaphore; requests beyond the limit are rejected with 503.
+ */
+export interface ConcurrencyConfig {
+  /** HTTP /mcp POST concurrent tool calls. Default: 16. */
+  http: number;
+  /** Bridge /mcp POST concurrent tool calls. Default: 16. */
+  bridge: number;
+}
+
 export interface ServerConfig {
   maxTimeout: number;
   defaultTimeout: number;
@@ -81,6 +94,7 @@ export interface ServerConfig {
   requireConfirmationPatterns: string[];
   bridge?: BridgeServerConfig;
   localAgent?: LocalAgentConfig;
+  concurrency?: ConcurrencyConfig;
 }
 
 export interface BridgeSecurityEnvelope {

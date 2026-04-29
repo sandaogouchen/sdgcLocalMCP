@@ -34,6 +34,10 @@ export const defaultConfig: ServerConfig = {
     'curl.*sh',
     'wget.*sh',
   ],
+  concurrency: {
+    http: 16,
+    bridge: 16,
+  },
   bridge: {
     enabled: false,
     host: '0.0.0.0',
@@ -47,6 +51,7 @@ export const defaultConfig: ServerConfig = {
       maxSkewMs: 300000,
       nonceTtlMs: 300000,
     },
+    concurrency: 16,
   },
   localAgent: {
     enabled: false,
@@ -80,6 +85,10 @@ function mergeConfig(base: ServerConfig, override: Partial<ServerConfig>): Serve
     allowedPaths: override.allowedPaths ?? base.allowedPaths,
     requireConfirmationPatterns:
       override.requireConfirmationPatterns ?? base.requireConfirmationPatterns,
+    concurrency: {
+      http: override.concurrency?.http ?? base.concurrency?.http ?? 16,
+      bridge: override.concurrency?.bridge ?? base.concurrency?.bridge ?? 16,
+    },
     bridge: override.bridge
       ? {
           ...base.bridge,
@@ -90,6 +99,8 @@ function mergeConfig(base: ServerConfig, override: Partial<ServerConfig>): Serve
             ...base.bridge?.replayProtection,
             ...override.bridge.replayProtection,
           },
+          concurrency:
+            override.bridge.concurrency ?? base.bridge?.concurrency ?? 16,
         }
       : base.bridge,
     localAgent: override.localAgent
